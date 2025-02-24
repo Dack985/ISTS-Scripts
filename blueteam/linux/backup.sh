@@ -1,7 +1,5 @@
 #!/bin/bash
 
-git config --global user.name "Local User"
-git config --global user.email "local@example.com"
 mkdir "$HOME/bak"
 
 git_install () {
@@ -13,6 +11,8 @@ git_install () {
     fi
 }
 
+git config --global user.name "Local User"
+git config --global user.email "local@example.com"
 
 #function to backup to a local git repo
 backup_files () {
