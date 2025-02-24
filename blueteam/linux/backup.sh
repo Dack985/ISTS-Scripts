@@ -83,7 +83,7 @@ fi
 echo "--------------------------------------------------------------------------------"
 echo "Making a backup of some key files for you now, select more to add yourself below"
 echo "--------------------------------------------------------------------------------"
-
+#add file paths here before comp that you want backed up
 files_to_backup=(
 "/etc/ssh/sshd_config"
 "/usr/bin/ls"
