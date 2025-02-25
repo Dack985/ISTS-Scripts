@@ -17,3 +17,8 @@
 #basic rootkit search
 
 #show mounted services
+
+
+
+#force reinstall update manager if tampering is suspected
+sudo apt-get install --reinstall update-manager
