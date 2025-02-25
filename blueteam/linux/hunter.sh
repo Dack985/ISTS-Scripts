@@ -82,8 +82,34 @@ crontab_persistence() {
     done | tee /tmp/crontabs.log
 }
 
+
+
+
+check_services() {
+services="/etc/systemd/system"
+
+
+find -L "$services" -type f -name "*.service" | while read service; do
+    if [ -e "$service" ]; then
+        echo -e "\n"
+        echo "--------------------------------------------------------------------------------"
+        echo "checking service $service"
+        echo "--------------------------------------------------------------------------------"
+        echo -e "\n"
+        grep -E 'Description|ExecStart|ExecStartPre|User|Group' "$service"
+    else
+        echo "skipping service $service"
+    fi
+done
+}
+
+
+
+
+
+
 # User Menu
-echo -ne "Enter Option (Default : Basic)\n1) Golang\n2) Kernel Persistence\n3) System Integrity\n4) Hidden Files\n5) Network Activity\n6) SUID Binaries\n7) Crontab Persistence\n8) All\n\n : "
+echo -ne "Enter Option (Default : Basic)\n1) Golang\n2) Kernel Persistence\n3) System Integrity\n4) Hidden Files\n5) Network Activity\n6) SUID Binaries\n7) systemd services\n8) Crontab Persistence\n9) All\n\n : "
 read -r opt
 
 case $opt in
@@ -93,7 +119,8 @@ case $opt in
     4) hidden_files ;;
     5) network_activity ;;
     6) suid_binaries ;;
-    7) crontab_persistence ;;
-    8) golang; kits; integrity_check; hidden_files; network_activity; suid_binaries; crontab_persistence ;;
+    7) check_services ;;
+    8) crontab_persistence ;;
+    9) golang; kits; integrity_check; hidden_files; network_activity; suid_binaries; crontab_persistence; check_services ;;
     *) kits; golang ;;
 esac
