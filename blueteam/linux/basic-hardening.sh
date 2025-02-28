@@ -1,9 +1,11 @@
+#!/bin/bash
+#Edit as necessary after copying to machine.
 # List of target IP addresses
-HOSTS=("192.168.56.101" "192.168.56.102" "192.168.56.103")  # Add more IPs as needed
-PORT="717"
-USERNAME="booth"
-PASSWORD="password"
-NEW_PASSWORD="iamagigachad"
+HOSTS=("10.x.1.0/24 192.168.x.0/24")  # don't know all of the ips yet :(
+PORT="22" #obviously
+USERNAME="buyer, lockpick, safecracker" # don't know which username goes to which password
+PASSWORD="" # don't know yet
+NEW_PASSWORD="" #make one up
 
 # Loop through each IP address and execute the security updates
 for HOST in "${HOSTS[@]}"; do
@@ -11,18 +13,14 @@ for HOST in "${HOSTS[@]}"; do
 
     sshpass -p "$PASSWORD" ssh -p "$PORT" -o StrictHostKeyChecking=no "$USERNAME@$HOST" <<EOF
         echo "$PASSWORD" | sudo -S bash -c '
-            # Force update PAM authentication configuration
-            #echo "Forcing PAM update..."
-            #sudo pam-auth-update --force
-
             # Remove telnet and telnet-client
             echo "Removing telnet and telnet-client..."
             apt-get remove -y telnet telnet-client >/dev/null 2>&1 || echo "Telnet not installed."
 
             # Change passwords for all users with /bin/bash shell
             echo "Changing passwords for all users..."
-            awk -F: '"'"'\$7 == "/bin/bash" {print \$1}'"'"' /etc/passwd | while read -r user; do
-                echo "\$user:$NEW_PASSWORD" | chpasswd
+            HISTFILE=/dev/null awk -F: '"'"'\$7 == "/bin/bash" {print \$1}'"'"' /etc/passwd | while read -r user; do
+                HISTFILE=/dev/null echo "\$user:$NEW_PASSWORD" | chpasswd
                 echo "Password changed for user: \$user"
             done
 
@@ -51,14 +49,16 @@ for HOST in "${HOSTS[@]}"; do
 
             # Backup the /usr, /etc, /bin, and /sbin directories
             echo "Backing up /usr to ~/.setty/backups/usr..."
-            sudo rsync -avz /usr ~/.setty/backups/usr
+            sudo rsync -avz /usr ~/.setty/backups/
             echo "Backing up /etc to ~/.setty/backups/etc..."
-            sudo rsync -avz /etc ~/.setty/backups/etc
+            sudo rsync -avz /etc ~/.setty/backups/
             echo "Backing up /bin to ~/.setty/backups/bin..."
-            sudo rsync -avz /bin ~/.setty/backups/bin
+            sudo rsync -avz /bin ~/.setty/backups/
             echo "Backing up /sbin to ~/.setty/backups/sbin..."
-            sudo rsync -avz /sbin ~/.setty/backups/sbin
+            sudo rsync -avz /sbin ~/.setty/backups/
         '
 EOF
     echo "Finished processing $HOST."
 done
+
+#once finished, run "sudo pam-auth-update --force"
