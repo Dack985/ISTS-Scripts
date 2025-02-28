@@ -1,23 +1,29 @@
-#detect all files changed within the last 10 mins
-
+#detect all files changed within the last 5 mins, can change to whatever you want, 5 was just a baseline
+sudo find / -type f -mmin -5
 
 #show every users crontab
+sudo awk -F: '{print $1}' /etc/passwd | while read user; do echo "### $user's Crontab ###"; crontab -l -u "$user" 2>/dev/null || echo "No crontab found"; echo ""; done
+
 
 #show every users ssh private key file
+sudo awk -F: '{print $1, $6}' /etc/passwd | while read user home; do [ -f "$home/.ssh/authorized_keys" ] && echo "### $user's SSH Keys ###" && cat "$home/.ssh/authorized_keys"; done
+
 
 #update pam
+sudo pam-auth-update --force
 
-#check for binaries over 2mb
+
+#check all failed ssh attempts
+journalctl _SYSTEMD_UNIT=ssh.service | egrep "Failed|Failure"
 
 
-#check ssh attempts
-
-#show every running service
-
+#show every system startup service
+sudo systemctl --all list-unit-files --type=service
 #basic rootkit search
 
-#show mounted services
 
+#show masked services
+systemctl list-units --all --type=service | grep '.service' | while read service; do if [ -L /etc/systemd/system/$service ] && [ "$(readlink /etc/systemd/system/$service)" == "/dev/null" ]; then echo "Masked: $service"; fi; done
 
 
 #force reinstall update manager if tampering is suspected
