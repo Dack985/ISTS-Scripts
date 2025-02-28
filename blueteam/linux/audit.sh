@@ -29,3 +29,8 @@ sudo auditctl -l
 
 echo "this ones gross ngl, but will show every vulnerable file that any user can write to"
 find / -type f \( -perm -4000 -o -perm -2000 \) 2>/dev/null | xargs ls -l
+
+
+
+echo "searching for any obvious gimmies"
+dpkg -l | grep -iE 'malicious|backdoor|suspicious|virus|evil|ev1l|bad'
