@@ -28,4 +28,4 @@ sudo auditctl -l
 
 
 echo "this ones gross ngl, but will show every vulnerable file that any user can write to"
-find / -type f -perm -o+w 2>/dev/null
+find / -type f \( -perm -4000 -o -perm -2000 \) 2>/dev/null | xargs ls -l
