@@ -40,3 +40,11 @@ who -u
 sudo pkill -KILL -u <user> 
 #also kill user based on session
 sudo pkill -Kill -u <user> --tty=<pts/>
+
+
+#shows all services listening for conenctions
+sudo netstat -tuln | grep LISTEN
+
+
+#show modified system binaries within the last 5 mins 
+sudo find /bin /sbin /usr/bin /usr/sbin -type f -mmin -5
