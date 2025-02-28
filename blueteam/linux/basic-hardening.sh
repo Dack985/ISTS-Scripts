@@ -15,7 +15,7 @@ for HOST in "${HOSTS[@]}"; do
         echo "$PASSWORD" | sudo -S bash -c '
             # Remove telnet and telnet-client
             echo "Removing telnet and telnet-client..."
-            apt-get remove -y telnet telnet-client >/dev/null 2>&1 || echo "Telnet not installed."
+            apt-get remove -y telnet telnetd >/dev/null 2>&1 || echo "Telnet not installed."
 
             # Change passwords for all users with /bin/bash shell
             echo "Changing passwords for all users..."
