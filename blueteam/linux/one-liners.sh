@@ -28,3 +28,15 @@ systemctl list-units --all --type=service | grep '.service' | while read service
 
 #force reinstall update manager if tampering is suspected
 sudo apt-get install --reinstall update-manager
+
+
+
+#show applications running on non standard ports 
+sudo netstat -tuln | grep -v ':22\|:80\|:443'
+
+
+#kick out any unknowkn users
+who -u
+sudo pkill -KILL -u <user> 
+#also kill user based on session
+sudo pkill -Kill -u <user> --tty=<pts/>
