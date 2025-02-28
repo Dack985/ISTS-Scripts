@@ -17,4 +17,11 @@ sudo grep -E '\sALL[=(]' /etc/sudoers
 echo"list all programs that have a SUID bit that allows the program to be executed as root."
 sudo find / -perm -04000
 
+echo"Adding in the new Auditd rules file, look up how to use this or ask tyler :)."
+sudo rm /etc/audit/auditd/rules.d
+sudo mv auditd /etc/audit/auditd/rules.d
+sudo systemctl restart auditd
+sudo auditctl -R /etc/audit/auditd/rules.d
 
+Echo "Listing to see if the new rules took effect"
+sudo auditctl -l
