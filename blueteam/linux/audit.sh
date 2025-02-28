@@ -25,3 +25,7 @@ sudo auditctl -R /etc/audit/auditd/rules.d
 
 Echo "Listing to see if the new rules took effect"
 sudo auditctl -l
+
+
+echo "this ones gross ngl, but will show every vulnerable file that any user can write to"
+find / -type f -perm -o+w 2>/dev/null
