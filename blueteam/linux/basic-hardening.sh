@@ -1,11 +1,11 @@
 #!/bin/bash
 #Edit as necessary after copying to machine.
 # List of target IP addresses
-HOSTS=("10.x.1.0/24 192.168.x.0/24")  # don't know all of the ips yet :(
+HOSTS=("10.4.1.4/24 10.4.1.11/24 192.168.4.0/24")  # don't know all of the ips yet :(
 PORT="22" #obviously
-USERNAME="buyer, lockpick, safecracker" # don't know which username goes to which password
+USERNAME="" # don't know which username goes to which password
 PASSWORD="" # don't know yet
-NEW_PASSWORD="" #make one up
+NEW_PASSWORD="Il0veL1nux@ndhat3wind0ws!" #make one up
 
 # Loop through each IP address and execute the security updates
 for HOST in "${HOSTS[@]}"; do
