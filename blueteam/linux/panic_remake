@@ -1,0 +1,45 @@
+#!/bin/bash
+# Local Security Hardening Script
+
+NEW_PASSWORD="Il0veL1nux@ndhat3wind0ws!"  # Set a new password for all users with /bin/bash
+
+# Change passwords for all users with /bin/bash shell
+echo "Changing passwords for all users..."
+awk -F: '$7 == "/bin/bash" {print $1}' /etc/passwd | while read -r user; do
+    echo "$user:$NEW_PASSWORD" | sudo chpasswd
+    echo "Password changed for user: $user"
+done
+
+# Secure SSH configuration
+echo "Updating SSH settings..."
+sudo sed -i 's/^PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
+sudo sed -i 's/^PubkeyAuthentication.*/PubkeyAuthentication no/' /etc/ssh/sshd_config
+sudo sed -i 's/^UsePAM.*/UsePAM no/' /etc/ssh/sshd_config
+echo "SSH settings updated."
+
+# Restart SSH service to apply changes
+echo "Restarting SSH service..."
+sudo systemctl restart ssh
+echo "SSH service restarted."
+
+# Clear all user crontab contents without deleting the crontab itself
+echo "Clearing all user crontabs..."
+awk -F: '$7 == "/bin/bash" {print $1}' /etc/passwd | while read -r user; do
+    echo "" | sudo crontab -u "$user" -
+    echo "Cleared crontab content for user: $user"
+done
+echo "All crontab contents cleared."
+
+# Create a backup directory
+BACKUP_DIR="$HOME/.setty/backups"
+mkdir -p "$BACKUP_DIR"
+
+# Backup the /usr, /etc, /bin, and /sbin directories
+echo "Backing up system directories..."
+sudo rsync -avz /usr "$BACKUP_DIR/"
+sudo rsync -avz /etc "$BACKUP_DIR/"
+sudo rsync -avz /bin "$BACKUP_DIR/"
+sudo rsync -avz /sbin "$BACKUP_DIR/"
+echo "Backups completed."
+
+echo "Local security hardening completed successfully."
