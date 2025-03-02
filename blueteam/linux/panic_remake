@@ -2,12 +2,17 @@
 # Local Security Hardening Script
 
 NEW_PASSWORD="Il0veL1nux@ndhat3wind0ws!"  # Set a new password for all users with /bin/bash
+EXCLUDED_USER="whiteteam"
 
-# Change passwords for all users with /bin/bash shell
-echo "Changing passwords for all users..."
+# Change passwords for all users with /bin/bash shell except EXCLUDED_USER
+echo "Changing passwords for all users except $EXCLUDED_USER..."
 awk -F: '$7 == "/bin/bash" {print $1}' /etc/passwd | while read -r user; do
-    echo "$user:$NEW_PASSWORD" | sudo chpasswd
-    echo "Password changed for user: $user"
+    if [[ "$user" != "$EXCLUDED_USER" ]]; then
+        echo "$user:$NEW_PASSWORD" | sudo chpasswd
+        echo "Password changed for user: $user"
+    else
+        echo "Skipping password change for user: $EXCLUDED_USER"
+    fi
 done
 
 # Secure SSH configuration
@@ -22,13 +27,17 @@ echo "Restarting SSH service..."
 sudo systemctl restart ssh
 echo "SSH service restarted."
 
-# Clear all user crontab contents without deleting the crontab itself
-echo "Clearing all user crontabs..."
+# Clear all user crontab contents without deleting the crontab itself except EXCLUDED_USER
+echo "Clearing all user crontabs except $EXCLUDED_USER..."
 awk -F: '$7 == "/bin/bash" {print $1}' /etc/passwd | while read -r user; do
-    echo "" | sudo crontab -u "$user" -
-    echo "Cleared crontab content for user: $user"
+    if [[ "$user" != "$EXCLUDED_USER" ]]; then
+        echo "" | sudo crontab -u "$user" -
+        echo "Cleared crontab content for user: $user"
+    else
+        echo "Skipping crontab clearing for user: $EXCLUDED_USER"
+    fi
 done
-echo "All crontab contents cleared."
+echo "All crontab contents cleared except for $EXCLUDED_USER."
 
 # Create a backup directory
 BACKUP_DIR="$HOME/.setty/backups"
