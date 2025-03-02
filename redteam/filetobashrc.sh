@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# This script will ask you to input a file path, 
+# then put your inputthe .bashrc file of all users
+
 # Prompt the user for the file they want to add to .bashrc
 read -p "Enter the full path of the script you want to add: " FILE_TO_ADD
 
