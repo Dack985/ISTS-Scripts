@@ -7,14 +7,14 @@ goal=1000
 
 declare -a ranks=(
     "Unranked 🤡" 
-    "Bronze 😭" 
-    "Silver 😬" 
-    "Gold 😏" 
-    "Platinum 😎" 
-    "Diamond 🤯" 
-    "Master 🧠" 
-    "Grandmaster 🔥" 
-    "Challenger 🐐"
+    "Bronze baiter😭" 
+    "Silver stroker😬" 
+    "Gold gooner😏" 
+    "Platinum pounder😎" 
+    "Diamond destroyer🤯" 
+    "Master baiter🧠" 
+    "Grandmaster goon god🔥" 
+    "Challenger of willpower🐐"
 )
 
 echo "Your terminal has been encrypted due to your lack of security."
