@@ -113,6 +113,6 @@ case $choice in
   2) iptables_ruleset ;;
   3) install_packages; iptables_ruleset; save_config ;;
   4) install_packages; iptables_ruleset; remove_training_wheels; save_config ;;
-  5) iptables_flush; save_config ;;
+  5) flush_iptables; save_config ;;
   *) echo "Please choose an option next time." ;;
 esac
