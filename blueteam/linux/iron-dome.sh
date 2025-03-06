@@ -8,7 +8,7 @@ fi
 
 
 scoring_engine_ip() {
-  echo "Please enter the IP address of the scoring engine."\n
+  echo "Please enter the IP address of the scoring engine."
   read -r ip
   if [[ "$ip" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
 #    IFS='.' read -r -a octets <<< "$ip"
@@ -19,9 +19,10 @@ scoring_engine_ip() {
 #      fi
 #    done
     scoring="$ip"
-    echo "Scoring-Engine IP: $scoring"\n
+    echo "Scoring-Engine IP: $scoring"
+    echo ""
   else
-    echo "Invalid IP format. The input IP must be in the format: X.X.X.X"\n
+    echo "Invalid IP format. The input IP must be in the format: X.X.X.X"
     return 1
   fi
 }
@@ -82,7 +83,12 @@ remove_training_wheels () {
 }
 
 flush_iptables () {
-  iptables -F
+  iptables -P INPUT ACCEPT
+  iptables -P FORWARD ACCEPT
+  iptables -P OUTPUT ACCEPT
+  iptables -F INPUT
+  iptables -F FORWARD
+  iptables -F OUTPUT
 }
 
 save_config () {
