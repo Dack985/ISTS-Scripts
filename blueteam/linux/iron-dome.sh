@@ -14,14 +14,15 @@ scoring_engine_ip() {
     IFS='.' read -r -a octets <<< "$ip"
     for octet in "${octets[@]}"; do
       if [ $((octect)) -lt 0 ] || [ $((octet)) -gt 255 ]; then
-        echo "Invalid IP. Each octet must be between 0 and 255."
+	echo "err: Invalid IP. Each octet must be between 0 and 255."
 	return 1
       fi
     done
+    echo "--> Setting scoring-engine IP..."
     scoring="$ip"
     echo ""
   else
-    echo "Invalid IP. Must enter in the format: X.X.X.X"
+    echo "err: Invalid IP. Must input in the format: X.X.X.X"
     return 1
   fi
 }
