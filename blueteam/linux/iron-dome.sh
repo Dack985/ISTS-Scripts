@@ -8,7 +8,7 @@ fi
 
 
 scoring_engine_ip() {
-  echo "Please enter the IP address of the scoring engine."
+  echo "Please enter the IP address of the scoring engine:"
   read -r ip
   if [[ "$ip" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
 #    IFS='.' read -r -a octets <<< "$ip"
@@ -19,7 +19,7 @@ scoring_engine_ip() {
 #      fi
 #    done
     scoring="$ip"
-    echo "Scoring-Engine IP: $scoring"
+#    echo "Scoring-Engine IP: $scoring"
     echo ""
   else
     echo "Invalid IP format. The input IP must be in the format: X.X.X.X"
@@ -108,7 +108,7 @@ while true; do
 done
 
 # Menu selection
-echo -ne "--IPTABLES SETUP OPTIONS-- \n1) Check For/Install Packages\n2) Apply Ruleset to Running Config\n3) Safe Setup\n4) Full Setup\n5) Un-Bork the Box\n6) Exit"
+echo -ne "--IPTABLES SETUP OPTIONS-- \n1) Check For/Install Packages\n2) Apply Ruleset to Running Config\n3) Safe Setup\n4) Full Setup\n5) Un-Bork the Box\n6) Exit\n"
 read -r choice
 
 case $choice in
