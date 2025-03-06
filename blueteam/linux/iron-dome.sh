@@ -29,9 +29,9 @@ scoring_engine_ip() {
 
 install_packages () {
   if dpkg -l | grep -q "^ii  iptables-persistent "; then
-    echo "--> Nice! iptables-persistent is installed--as you were!"
+    echo "--> Nice, iptables-persistent is installed--moving on!"
   else
-    echo "--> Shoot! iptables-persistent isn't installed. Installing..."
+    echo "--> Missing iptables-persistent package. Installing now..."
     apt install -y iptables-persistent
   fi
 
@@ -83,6 +83,8 @@ remove_training_wheels () {
 }
 
 iptables_reset () {
+  echo "--> Resetting your firewall rules..."
+  sleep 1
   iptables -P INPUT ACCEPT
   iptables -P FORWARD ACCEPT
   iptables -P OUTPUT ACCEPT
@@ -92,6 +94,7 @@ iptables_reset () {
 }
 
 save_config () {
+  echo "--> Saving configurations..."
   sh -c "iptables-save > /etc/iptables/rules.v4"
 }
 
@@ -105,7 +108,7 @@ while true; do
 done
 
 # Menu selection
-echo -ne "--IPTABLES SETUP OPTIONS-- \n1) Check For/Install Packages\n2) Apply Ruleset to Running Config\n3) Safe Setup\n4) Full Setup\n5) Un-Bork the Box\n"
+echo -ne "--IPTABLES SETUP OPTIONS-- \n1) Check For/Install Packages\n2) Apply Ruleset to Running Config\n3) Safe Setup\n4) Full Setup\n5) Un-Bork the Box\n6) Exit"
 read -r choice
 
 case $choice in
@@ -114,5 +117,6 @@ case $choice in
   3) install_packages; iptables_ruleset; save_config ;;
   4) install_packages; iptables_ruleset; remove_training_wheels; save_config ;;
   5) iptables_reset; save_config ;;
+  6) exit ;;
   *) echo "Please choose an option next time."; exit ;;
 esac
