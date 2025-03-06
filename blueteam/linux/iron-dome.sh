@@ -8,7 +8,7 @@ fi
 
 
 scoring_engine_ip() {
-  echo "Please enter the IP address of the scoring engine."
+  echo "Please enter the IP address of the scoring engine.\n"
   read -r ip
   if [[ "$ip" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
 #    IFS='.' read -r -a octets <<< "$ip"
@@ -21,19 +21,25 @@ scoring_engine_ip() {
     scoring="$ip"
     echo "Scoring-engine IP: $scoring"
   else
-    echo "Invalid IP format. The input IP must be in the format: X.X.X.X"
+    echo "Invalid IP format. The input IP must be in the format: X.X.X.X\n"
     return 1
   fi
 }
 
 install_packages () {
-  #if dpkg -l | grep -q "^ii  iptables-persistent "; then
-  if ! command -v iptables-save &> /dev/null; then
+  if dpkg -l | grep -q "^ii  iptables-persistent "; then
+    echo "Hey, iptables-persistent is installed--as you were!"
+  else
     echo "You don't have iptables-persistent. Installing..."
     apt install -y iptables-persistent
-  else
-    echo "Hey, iptables-persistent is installed--as you were!"
   fi
+
+#  if ! command -v iptables-save &> /dev/null; then
+#    echo "You don't have iptables-persistent. Installing..."
+#    apt install -y iptables-persistent
+#  else
+#    echo "Hey, iptables-persistent is installed--as you were!"
+#  fi
 }
 
 iptables_ruleset () {
@@ -89,7 +95,7 @@ while true; do
 done
 
 # Menu selection
-echo -ne "SETUP OPTIONS: \n1) Check For/Install Packages\n2) Apply Ruleset to Running Config\n3) Safe Setup\n4) Full Setup\n5) Un-Bork the Box"
+echo -ne "SETUP OPTIONS: \n1) Check For/Install Packages\n2) Apply Ruleset to Running Config\n3) Safe Setup\n4) Full Setup\n5) Un-Bork the Box\n"
 read -r choice
 
 case $choice in
