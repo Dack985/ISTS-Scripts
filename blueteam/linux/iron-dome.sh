@@ -11,13 +11,13 @@ scoring_engine_ip() {
   echo "Please enter the IP address of the scoring engine."
   read -r ip
   if [[ "$ip" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
-    IFS='.' read -r -a octets <<< "$ip"
-    for octet in "${octets[@]}"; do
-      if [ "$octect" -lt 0 ] || [ "$octet" -gt 255 ]; then
-        echo "Invalid IP: each octet must be between 0 and 255."
-	return 1
-      fi
-    done
+#    IFS='.' read -r -a octets <<< "$ip"
+#    for octet in "${octets[@]}"; do
+#      if [ "$octect" -lt 0 ] || [ "$octet" -gt 255 ]; then
+#        echo "Invalid IP: each octet must be between 0 and 255."
+#	return 1
+#      fi
+#    done
     scoring="$ip"
     echo "Scoring-engine IP: $scoring"
   else
@@ -41,9 +41,9 @@ iptables_ruleset () {
   iptables -A INPUT -j ACCEPT
   iptables -A OUTPUT -j ACCEPT
   # Chain the default chain rules to deny any-any
-  iptables -P INPUT -j DROP
-  iptables -P FORWARD -j DROP
-  iptables -P OUTPUT -j DROP
+  iptables -P INPUT DROP
+  iptables -P FORWARD DROP
+  iptables -P OUTPUT DROP
   # Allow loopback interface traffic in/out
   iptables -A INPUT -i lo -j ACCEPT
   iptables -A OUTPUT -o lo -j ACCEPT
