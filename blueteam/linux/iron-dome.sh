@@ -2,13 +2,13 @@
 
 # Make sure the script is only run with root privilege
 if [ $EUID -ne 0 ]; then
-  echo "You must run this with root privileges."
+  echo "You must run this script with root privileges."
   exit 2
 fi
 
 
 scoring_engine_ip() {
-  echo "Please enter the IP address of the scoring engine.\n"
+  echo "Please enter the IP address of the scoring engine."\n
   read -r ip
   if [[ "$ip" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
 #    IFS='.' read -r -a octets <<< "$ip"
@@ -19,18 +19,18 @@ scoring_engine_ip() {
 #      fi
 #    done
     scoring="$ip"
-    echo "Scoring-engine IP: $scoring"
+    echo "Scoring-Engine IP: $scoring"\n
   else
-    echo "Invalid IP format. The input IP must be in the format: X.X.X.X\n"
+    echo "Invalid IP format. The input IP must be in the format: X.X.X.X"\n
     return 1
   fi
 }
 
 install_packages () {
   if dpkg -l | grep -q "^ii  iptables-persistent "; then
-    echo "Hey, iptables-persistent is installed--as you were!"
+    echo "--> Nice! iptables-persistent is installed--as you were!"
   else
-    echo "You don't have iptables-persistent. Installing..."
+    echo "--> Shoot! iptables-persistent isn't installed. Installing..."
     apt install -y iptables-persistent
   fi
 
@@ -43,6 +43,8 @@ install_packages () {
 }
 
 iptables_ruleset () {
+  echo "--> Setting up your firewall now..."
+  sleep 2
   # Create temporary allow any-any to prevent lockouts
   iptables -A INPUT -j ACCEPT
   iptables -A OUTPUT -j ACCEPT
@@ -73,6 +75,8 @@ iptables_ruleset () {
 }
 
 remove_training_wheels () {
+  echo "--> Removing training wheels..."
+  sleep 1
   iptables -D INPUT 1
   iptables -D OUTPUT 1
 }
