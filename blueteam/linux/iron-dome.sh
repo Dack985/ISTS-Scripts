@@ -45,7 +45,7 @@ install_packages () {
 
 iptables_ruleset () {
   echo "--> Setting up your firewall now..."
-  sleep 2
+  sleep 1
   # Create temporary allow any-any to prevent lockouts
   iptables -A INPUT -j ACCEPT
   iptables -A OUTPUT -j ACCEPT
@@ -71,8 +71,8 @@ iptables_ruleset () {
   iptables -A OUTPUT -p tcp --dport 80 -m conntrack --ctstate NEW -j ACCEPT
   iptables -A OUTPUT -p tcp --dport 443 -m conntrack --ctstate NEW -j ACCEPT
   # Add the scoring-engine IP to whitelist all traffic to and from that device
-  #iptables -A INPUT -s $scoring -m conntrack --ctstate NEW -j ACCEPT
-  #iptables -A OUTPUT -d $scoring -m conntrack --ctstate NEW -j ACCEPT
+  iptables -A INPUT -s $scoring -m conntrack --ctstate NEW -j ACCEPT
+  iptables -A OUTPUT -d $scoring -m conntrack --ctstate NEW -j ACCEPT
 }
 
 remove_training_wheels () {
@@ -82,7 +82,7 @@ remove_training_wheels () {
   iptables -D OUTPUT 1
 }
 
-flush_iptables () {
+iptables_reset () {
   iptables -P INPUT ACCEPT
   iptables -P FORWARD ACCEPT
   iptables -P OUTPUT ACCEPT
@@ -97,15 +97,15 @@ save_config () {
 
 
 # Call the function to enter scoring IP
-#while true; do
-#  scoring_engine_ip
-#  if [ -n "$scoring" ]; then
-#    break
-#  fi
-#done
+while true; do
+  scoring_engine_ip
+  if [ -n "$scoring" ]; then
+    false
+  fi
+done
 
 # Menu selection
-echo -ne "--SETUP OPTIONS-- \n1) Check For/Install Packages\n2) Apply Ruleset to Running Config\n3) Safe Setup\n4) Full Setup\n5) Un-Bork the Box\n"
+echo -ne "--IPTABLES SETUP OPTIONS-- \n1) Check For/Install Packages\n2) Apply Ruleset to Running Config\n3) Safe Setup\n4) Full Setup\n5) Un-Bork the Box\n"
 read -r choice
 
 case $choice in
@@ -113,6 +113,6 @@ case $choice in
   2) iptables_ruleset ;;
   3) install_packages; iptables_ruleset; save_config ;;
   4) install_packages; iptables_ruleset; remove_training_wheels; save_config ;;
-  5) flush_iptables; save_config ;;
-  *) echo "Please choose an option next time." ;;
+  5) iptables_reset; save_config ;;
+  *) echo "Please choose an option next time."; exit ;;
 esac
