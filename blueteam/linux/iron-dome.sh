@@ -100,7 +100,7 @@ save_config () {
 while true; do
   scoring_engine_ip
   if [ -n "$scoring" ]; then
-    false
+    break
   fi
 done
 
