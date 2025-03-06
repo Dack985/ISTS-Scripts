@@ -22,7 +22,7 @@ scoring_engine_ip() {
 #    echo "Scoring-Engine IP: $scoring"
     echo ""
   else
-    echo "Invalid IP format. The input IP must be in the format: X.X.X.X"
+    echo "Invalid IP format. Must enter in the format: X.X.X.X"
     return 1
   fi
 }
@@ -99,7 +99,7 @@ save_config () {
 }
 
 
-# Call the function to enter scoring IP
+# Begin main part of script
 while true; do
   scoring_engine_ip
   if [ -n "$scoring" ]; then
@@ -107,8 +107,16 @@ while true; do
   fi
 done
 
-# Menu selection
-echo -ne "--IPTABLES SETUP OPTIONS-- \n1) Check For/Install Packages\n2) Apply Ruleset to Running Config\n3) Safe Setup\n4) Full Setup\n5) Un-Bork the Box\n6) Exit\n"
+# ~Documentation~
+# 1 - Check for iptables persistent package and install if not found
+# 2 - Apply our custom ruleset to the running config
+# 3 - Apply the custom ruleset and save it, but do not remove the safety allow any-any
+# 4 - Apply the custom ruleset, remove the safety allow any-any, and save the config
+# 5 - Set each chain rule to accept all traffic and flush the individual rules
+# 6 - Exit the program
+
+# Menu selection starts 
+echo -ne "--FIREWALL CONFIGURATION-- \n1) Check For & Install Packages\n2) Quick Config\n3) Safe Setup\n4) Launch the Iron Dome\n5) Unbork the Box\n6) Exit\n"
 read -r choice
 
 case $choice in
@@ -118,5 +126,5 @@ case $choice in
   4) install_packages; iptables_ruleset; remove_training_wheels; save_config ;;
   5) iptables_reset; save_config ;;
   6) exit ;;
-  *) echo "Please choose an option next time."; exit ;;
+  *) echo "--> Defaulting to exit."; exit ;;
 esac
