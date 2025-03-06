@@ -11,18 +11,17 @@ scoring_engine_ip() {
   echo "Please enter the IP address of the scoring engine:"
   read -r ip
   if [[ "$ip" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
-#    IFS='.' read -r -a octets <<< "$ip"
-#    for octet in "${octets[@]}"; do
-#      if [ "$octect" -lt 0 ] || [ "$octet" -gt 255 ]; then
-#        echo "Invalid IP: each octet must be between 0 and 255."
-#	return 1
-#      fi
-#    done
+    IFS='.' read -r -a octets <<< "$ip"
+    for octet in "${octets[@]}"; do
+      if [ $((octect)) -lt 0 ] || [ $((octet)) -gt 255 ]; then
+        echo "Invalid IP. Each octet must be between 0 and 255."
+	return 1
+      fi
+    done
     scoring="$ip"
-#    echo "Scoring-Engine IP: $scoring"
     echo ""
   else
-    echo "Invalid IP format. Must enter in the format: X.X.X.X"
+    echo "Invalid IP. Must enter in the format: X.X.X.X"
     return 1
   fi
 }
