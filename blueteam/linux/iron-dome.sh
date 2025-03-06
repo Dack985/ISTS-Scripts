@@ -30,7 +30,7 @@ scoring_engine_ip() {
 install_packages () {
   if dpkg -l | grep -q "^ii  iptables-persistent "; then
     echo "--> Nice, iptables-persistent is installed--moving on!"
-    sleep 0.2
+    sleep 0.4
   else
     echo "--> Missing iptables-persistent package. Installing now..."
     apt install -y iptables-persistent
@@ -46,7 +46,7 @@ install_packages () {
 
 iptables_ruleset () {
   echo "--> Setting up your firewall now..."
-  sleep 0.7
+  sleep 1 
   # Create temporary allow any-any to prevent lockouts
   iptables -A INPUT -j ACCEPT
   iptables -A OUTPUT -j ACCEPT
@@ -78,14 +78,14 @@ iptables_ruleset () {
 
 remove_training_wheels () {
   echo "--> Removing training wheels..."
-  sleep 0.5
+  sleep 0.7
   iptables -D INPUT 1
   iptables -D OUTPUT 1
 }
 
 iptables_reset () {
   echo "--> Resetting your firewall rules..."
-  sleep 0.5
+  sleep 0.7
   iptables -P INPUT ACCEPT
   iptables -P FORWARD ACCEPT
   iptables -P OUTPUT ACCEPT
