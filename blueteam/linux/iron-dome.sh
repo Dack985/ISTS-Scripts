@@ -6,6 +6,21 @@ if [ $EUID -ne 0 ]; then
   exit 2
 fi
 
+echo "installing packages needed for proper firewalling... bozo, i am the firewall god... "
+  if dpkg -l | grep -q "^ii  iptables-persistent "; then
+    echo "--> Nice, iptables-persistent is installed--moving on!"
+    sleep 0.4
+  else
+    echo "--> Missing iptables-persistent package. Installing now..."
+    apt install -y iptables-persistent
+  fi
+
+#  if ! command -v iptables-save &> /dev/null; then
+#    echo "You don't have iptables-persistent. Installing..."
+#    apt install -y iptables-persistent
+#  else
+#    echo "Hey, iptables-persistent is installed--as you were!"
+#  fi
 
 scoring_engine_ip() {
   echo "Please enter the IP address of the scoring engine:"
@@ -28,62 +43,39 @@ scoring_engine_ip() {
 }
 
 private_ip_addresses() {
-  echo "Please enter the IP addresses of your private devices seperated by spaces (eg 192.168.1.1 192.168.1.2):"
+  echo "Please enter the IP addresses of your private devices separated by spaces (eg 192.168.1.1 192.168.1.2):"
   read -a private_ips
 
   valid_ips=()
-  
+
   for private_ip in "${private_ips[@]}"; do
-    if [[ "$private_ip" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
-    IFS='.' read -r -a octets <<< "$private_ip"
-    valid=true
-    
-    for octet in "${octets[@]}"; do
-      if [ $((octet)) -lt 0 ] || [ $((octet)) -gt 255 ]; then
-	    echo "err: Invalid IP. Each octet must be between 0 and 255."
-	    valid=false
-        break
-      fi
-    done
-    if [[ "$valid"=="true" ]]; then
+    if [[ "$private_ip" =~ ^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$ ]]; then
       valid_ips+=("$private_ip")
-      echo "--> valid private ip detected and added: $private_ip"
+      echo "--> valid private IP detected and added: $private_ip"
+    else
+      echo "err: Invalid IP. Must input in the format: X.X.X.X and ensure it is a proper ip address"
     fi
+  done
+
+  if [ ${#valid_ips[@]} -gt 0 ]; then
+    echo "Valid IPs collected: ${valid_ips[*]}"
   else
-    echo "err: Invalid IP. Must input in the format: X.X.X.X"
-    return 1
+    echo "No valid IPs were entered."
   fi
-done
-echo "Valid IPs collected: ${valid_ips[*]}"
-forgoten_private_ip
+  
+  forgotten_private_ip
 }
 
-forgoten_private_ip() {
-    echo "Would you like to add in any ip addresses you may have missed?"
-        select yn in "Yes" "No"; do
+forgotten_private_ip() {
+    echo "Would you like to add any IP addresses you may have missed?"
+    select yn in "Yes" "No"; do
         case $yn in
         Yes ) private_ip_addresses; break;;
         No ) return;;
-    esac
-done
+        esac
+    done
 }
 
-install_packages () {
-  if dpkg -l | grep -q "^ii  iptables-persistent "; then
-    echo "--> Nice, iptables-persistent is installed--moving on!"
-    sleep 0.4
-  else
-    echo "--> Missing iptables-persistent package. Installing now..."
-    apt install -y iptables-persistent
-  fi
-
-#  if ! command -v iptables-save &> /dev/null; then
-#    echo "You don't have iptables-persistent. Installing..."
-#    apt install -y iptables-persistent
-#  else
-#    echo "Hey, iptables-persistent is installed--as you were!"
-#  fi
-}
 
 iptables_ruleset () {
   echo "--> Setting up your firewall now..."
