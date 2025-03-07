@@ -13,7 +13,7 @@ scoring_engine_ip() {
   if [[ "$ip" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
     IFS='.' read -r -a octets <<< "$ip"
     for octet in "${octets[@]}"; do
-      if [ $((octect)) -lt 0 ] || [ $((octet)) -gt 255 ]; then
+      if [ $((octet)) -lt 0 ] || [ $((octet)) -gt 255 ]; then
 	echo "err: Invalid IP. Each octet must be between 0 and 255."
 	return 1
       fi
@@ -25,6 +25,47 @@ scoring_engine_ip() {
     echo "err: Invalid IP. Must input in the format: X.X.X.X"
     return 1
   fi
+}
+
+private_ip_addresses() {
+  echo "Please enter the IP addresses of your private devices seperated by spaces (eg 192.168.1.1 192.168.1.2):"
+  read -a private_ips
+
+  valid_ips=()
+  
+  for private_ip in "${private_ips[@]}"; do
+    if [[ "$private_ip" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+    IFS='.' read -r -a octets <<< "$private_ip"
+    valid=true
+    
+    for octet in "${octets[@]}"; do
+      if [ $((octet)) -lt 0 ] || [ $((octet)) -gt 255 ]; then
+	    echo "err: Invalid IP. Each octet must be between 0 and 255."
+	    valid=false
+        break
+      fi
+    done
+    if [[ "$valid"=="true" ]]; then
+      valid_ips+=("$private_ip")
+      echo "--> valid private ip detected and added: $private_ip"
+    fi
+  else
+    echo "err: Invalid IP. Must input in the format: X.X.X.X"
+    return 1
+  fi
+done
+echo "Valid IPs collected: ${valid_ips[*]}"
+forgoten_private_ip
+}
+
+forgoten_private_ip() {
+    echo "Would you like to add in any ip addresses you may have missed?"
+        select yn in "Yes" "No"; do
+        case $yn in
+        Yes ) private_ip_addresses; break;;
+        No ) return;;
+    esac
+done
 }
 
 install_packages () {
@@ -116,6 +157,8 @@ done
 # 5 - Set each chain rule to accept all traffic and flush the individual rules
 # 6 - Exit the program
 
+
+#not added in yet as firewall rules/cases havent been added in to quantify using it, will augement firewall rules soon function (private_ip_addresses)
 # Menu selection starts 
 echo -ne "--FIREWALL CONFIGURATION-- \n1) Check For & Install Packages\n2) Quick Config\n3) Safe Setup\n4) Launch the Iron Dome\n5) Unbork the Box\n6) Exit\n"
 read -r choice
