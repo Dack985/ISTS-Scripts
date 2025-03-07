@@ -6,7 +6,7 @@ if [ $EUID -ne 0 ]; then
   exit 2
 fi
 
-echo "installing packages needed for proper firewalling... bozo, i am the firewall god... "
+echo "installing required packages... bozo... i am the firewall god "
   if dpkg -l | grep -q "^ii  iptables-persistent "; then
     echo "--> Nice, iptables-persistent is installed--moving on!"
     sleep 0.4
@@ -37,7 +37,7 @@ scoring_engine_ip() {
     scoring="$ip"
     echo ""
   else
-    echo "err: Invalid IP. Must input in the format: X.X.X.X"
+    echo "err: Invalid IP. Must input in the format: X.X.X.X or ensure ip address is correct"
     return 1
   fi
 }
@@ -53,7 +53,7 @@ private_ip_addresses() {
       valid_ips+=("$private_ip")
       echo "--> valid private IP detected and added: $private_ip"
     else
-      echo "err: Invalid IP. Must input in the format: X.X.X.X and ensure it is a proper ip address"
+      echo "err: Invalid IP. Must input in the format: X.X.X.X or ensure ip address is correct"
     fi
   done
 
@@ -75,7 +75,6 @@ forgotten_private_ip() {
         esac
     done
 }
-
 
 iptables_ruleset () {
   echo "--> Setting up your firewall now..."
