@@ -1,12 +1,13 @@
 #!/bin/bash
 
-# Make sure the script is only run with root privilege
 if [ $EUID -ne 0 ]; then
   echo "You must run this script with root privileges."
   exit 2
 fi
 
-# Automatically check for and install packages if they are not there
+echo "Checking box for operating system type..."
+this_OS=$(hostnamectl | grep "Operating System: " | awk '{ print $3 }')
+
 echo "Installing required packages... bozo... I am the firewall god!!!"
 if dpkg -l | grep -q "^ii  iptables-persistent "; then
   echo "--> Nice, iptables-persistent is installed--moving on!"
@@ -16,19 +17,25 @@ else
   apt install -y iptables-persistent
 fi
 
+
+set_box_type () {
+  echo "Does this box need to forward traffic? [y/n]: "
+  select yn in "Yes" "No"; do
+    case $yn in
+      Yes) $box_type=1;;
+      No) $box_type=0;;
+      *) echo "Please answer yes or no.";;
+    esac
+  done
+}
+
 scoring_engine_ip () {
-  echo "Please enter the IP address of the scoring engine:"
-  read -r ip
-  if [[ "$ip" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
-    IFS='.' read -r -a octets <<< "$ip"
-    for octet in "${octets[@]}"; do
-      if [ $((octet)) -lt 0 ] || [ $((octet)) -gt 255 ]; then
-	echo "### Invalid IP. Each octet must be between 0 and 255."
-	return 1
-      fi
-    done
-    echo "--> Setting scoring-engine IP..."
-    scoring="$ip"
+  echo "Please enter the IP address or the subnet range of the scoring engine (eg. 172.16.0.10 or 172.16.0.0/22):"
+  read -r input_scoring_ip
+
+  if [[ "$input_scoring_ip" =~ ^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$ ]]; then
+    scoring_ip="$input_scoring_ip"
+    echo "--> Setting scoring-engine IP to: $scoring_ip"
     echo ""
   else
     echo "### Invalid IP. Must input in the format: X.X.X.X or ensure ip address is correct"
@@ -66,6 +73,7 @@ forgotten_private_ip () {
     case $yn in
       Yes) private_ip_addresses; break;;
       No) return;;
+      *) echo "Please answer yes or no.";;
     esac
   done
 }
@@ -76,30 +84,46 @@ iptables_ruleset () {
   # Create temporary allow any-any to prevent lockouts
   iptables -A INPUT -j ACCEPT
   iptables -A OUTPUT -j ACCEPT
-  # Chain the default chain rules to deny any-any
+
+  # Change the default chain rules to deny any-any
   iptables -P INPUT DROP
-  iptables -P FORWARD DROP
+  if [ $box_type -eq 1 ]; then
+    iptables -P FORWARD DROP
+  fi
   iptables -P OUTPUT DROP
-  # Allow loopback interface traffic in/out
+
+  # Allow loopback interface traffic in/out - for self-testing purposes
   iptables -A INPUT -i lo -j ACCEPT
   iptables -A OUTPUT -o lo -j ACCEPT
+
   # Keep track of existing connections and allow them both in/out
   iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
   iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-  # Allow DNS outbound over both tcp & udp
-  iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT
-  iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
-  # Allow SSH into and from the box (can modify later to specify certain IPs)
+
   iptables -A INPUT -p tcp --dport 22 -m conntrack --ctstate NEW -j ACCEPT
   iptables -A OUTPUT -p tcp --dport 22 -m conntrack --ctstate NEW -j ACCEPT
-  # Allow NTP outbound to provide time syncing
-  iptables -A OUTPUT -p udp --sport 123 --dport 123 -j ACCEPT
+
+  # Commented out this goofy ahh NTP rule bc we didn't use it at CCDC and it didn't affect us
+  # iptables -A OUTPUT -p udp --sport 123 --dport 123 -j ACCEPT
+
   # Allow the outbound connections over the Internet
   iptables -A OUTPUT -p tcp --dport 80 -m conntrack --ctstate NEW -j ACCEPT
   iptables -A OUTPUT -p tcp --dport 443 -m conntrack --ctstate NEW -j ACCEPT
-  # Add the scoring-engine IP to whitelist all traffic to and from that device
-  iptables -A INPUT -s $scoring -m conntrack --ctstate NEW -j ACCEPT
-  iptables -A OUTPUT -d $scoring -m conntrack --ctstate NEW -j ACCEPT
+
+  # Allow DNS outbound over both tcp & udp - for using apt installs and the like
+  iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT
+  iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
+
+  # Whitelist scoring-engine IP
+  iptables -A INPUT -s $scoring_ip -m conntrack --ctstate NEW -j ACCEPT
+  iptables -A OUTPUT -d $scoring_ip -m conntrack --ctstate NEW -j ACCEPT
+
+  if [ ${#valid_ips[@]} -gt 0 ]; then
+    for internal_ip in "${valid_ips[@]}"; do
+      iptables -A INPUT -s $internal_ip -m conntrack --ctstate NEW -j ACCEPT
+      iptables -A OUTPUT -d $internal_ip -m conntrack --ctstate NEW -j ACCEPT
+    done
+  fi
 }
 
 remove_training_wheels () {
@@ -122,14 +146,20 @@ iptables_reset () {
 
 save_config () {
   echo "--> Saving configurations..."
-  sh -c "iptables-save > /etc/iptables/rules.v4"
+
+  if [ "$this_OS" == "Ubuntu" ]; then
+    sh -c "iptables-save > /etc/iptables/rules.v4"
+  elif [ "$this_OS" == "Rocky" ] || [ "$this_OS" == "Fedora" ]; then
+    sh -c "iptables-save > /etc/sysconfig/iptables"
+  fi
 }
 
 
-# Begin main part of script
+set_box_type
+
 while true; do
   scoring_engine_ip
-  if [ -n "$scoring" ]; then
+  if [ -n "$scoring_ip" ]; then
     break
   fi
 done
@@ -141,17 +171,16 @@ done
 # 4 - Set each chain rule to accept all traffic and flush the individual rules
 # 5 - Exit the program
 
-
-#not added in yet as firewall rules/cases havent been added in to quantify using it, will augement firewall rules soon function (private_ip_addresses)
+#not added in yet as firewall rules/cases havent been added in to quantify using it, will augment firewall rules soon function (private_ip_addresses)
 # Menu selection starts 
 echo -ne "--FIREWALL CONFIGURATION-- \n1) Quick Config\n2) Safe Setup\n3) Launch the IRON DOME\n4) Unbork the Box\n5) Exit\n"
 read -r choice
 
 case $choice in
-  1) iptables_ruleset ;;
-  2) iptables_ruleset; save_config ;;
-  3) iptables_ruleset; remove_training_wheels; save_config ;;
-  4) iptables_reset; save_config ;;
-  5) exit ;;
-  *) echo "--> Defaulting to exit."; exit ;;
+  1) iptables_ruleset;;
+  2) iptables_ruleset; save_config;;
+  3) iptables_ruleset; remove_training_wheels; save_config;;
+  4) iptables_reset; save_config;;
+  5) exit;;
+  *) echo "--> Defaulting to exit."; exit;;
 esac
