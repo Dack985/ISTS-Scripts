@@ -13,8 +13,8 @@ OS_name=$(hostnamectl | grep "Operating System: " | awk '{ print $3 }')
 if [ "$OS_name" == "Rocky" ] || [ "$OS_name" == "Fedora" ] || [ "$OS_name" == "CentOS" ] || [ "$OS_name" == "Red" ] || [ "$OS_name"  == "Oracle" ]; then
   this_OS=1
 fi
-sleep 0.2
-echo "--> Operating system recorded!"\n
+echo "--> Operating system recorded!"
+sleep 0.3
 
 echo "Installing required packages... bozo... I am the firewall god!!!"
 if [ "$this_OS" -eq 1 ]; then
@@ -49,7 +49,7 @@ scoring_engine_ip () {
   echo "Please enter the IP address or the subnet range of the scoring engine (eg. 172.16.0.10 or 172.16.0.0/16):"
   read -r input_scoring_ip
 
-  if [[ "$input_scoring_ip" =~ ^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$ ]]; then
+  if [[ "$input_scoring_ip" =~ ^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(/(3[0-2]|[12]?[0-9]))?$ ]]; then
     scoring_ip="$input_scoring_ip"
     echo "--> Setting scoring-engine IP to: $scoring_ip"
     echo ""
@@ -131,8 +131,10 @@ iptables_ruleset () {
   iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT
 
   # Whitelist scoring-engine IP
-  iptables -A INPUT -s $scoring_ip -m conntrack --ctstate NEW -j ACCEPT
-  iptables -A OUTPUT -d $scoring_ip -m conntrack --ctstate NEW -j ACCEPT
+  if [ -n "$scoring_ip" ]; then
+    iptables -A INPUT -s $scoring_ip -m conntrack --ctstate NEW -j ACCEPT
+    iptables -A OUTPUT -d $scoring_ip -m conntrack --ctstate NEW -j ACCEPT
+  fi
 
   # Whitelist IPs of internal machines
   if [ ${#valid_ips[@]} -gt 0 ]; then
@@ -175,12 +177,16 @@ save_config () {
 # Function below not working cause I'm a goober
 # set_box_type
 
-while true; do
-  scoring_engine_ip
-  if [ -n "$scoring_ip" ]; then
-    break
-  fi
-done
+echo "Would you like to set a scoring-engine IP?"
+read -r option
+if [ "$option" == "yes" ] || [ "$option" == "y" ]; then
+  while true; do
+    scoring_engine_ip
+    if [ -n "$scoring_ip" ]; then
+      break
+    fi
+  done
+fi
 
 # ~Documentation~
 # 1 - Apply our custom ruleset to the running config
