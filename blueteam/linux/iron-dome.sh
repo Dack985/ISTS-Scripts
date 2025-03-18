@@ -13,12 +13,14 @@ OS_name=$(hostnamectl | grep "Operating System: " | awk '{ print $3 }')
 if [ "$OS_name" == "Rocky" ] || [ "$OS_name" == "Fedora" ] || [ "$OS_name" == "CentOS" ] || [ "$OS_name" == "Red" ] || [ "$OS_name"  == "Oracle" ]; then
   this_OS=1
 fi
+sleep 0.2
+echo "--> Operating system recorded!\n"
 
 echo "Installing required packages... bozo... I am the firewall god!!!"
 if [ "$this_OS" -eq 1 ]; then
   systemctl stop firewalld
   systemctl disable firewalld
-  sleep 0.4
+  sleep 0.2
   echo "--> Installing all iptables services and utils..."
   dnf install -y iptables-services ; dnf install -y iptables-util
 else
