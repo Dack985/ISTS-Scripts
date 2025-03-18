@@ -14,7 +14,7 @@ if [ "$OS_name" == "Rocky" ] || [ "$OS_name" == "Fedora" ] || [ "$OS_name" == "C
   this_OS=1
 fi
 sleep 0.2
-echo "--> Operating system recorded!\n"
+echo "--> Operating system recorded!"\n
 
 echo "Installing required packages... bozo... I am the firewall god!!!"
 if [ "$this_OS" -eq 1 ]; then
