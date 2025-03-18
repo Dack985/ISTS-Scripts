@@ -5,16 +5,30 @@ if [ $EUID -ne 0 ]; then
   exit 2
 fi
 
+this_OS=0
+box_type=0
+
 echo "Checking box for operating system type..."
-this_OS=$(hostnamectl | grep "Operating System: " | awk '{ print $3 }')
+OS_name=$(hostnamectl | grep "Operating System: " | awk '{ print $3 }')
+if [ "$OS_name" == "Rocky" ] || [ "$OS_name" == "Fedora" ] || [ "$OS_name" == "CentOS" ] || [ "$OS_name" == "Red" ] || [ "$OS_name"  == "Oracle" ]; then
+  this_OS=1
+fi
 
 echo "Installing required packages... bozo... I am the firewall god!!!"
-if dpkg -l | grep -q "^ii  iptables-persistent "; then
-  echo "--> Nice, iptables-persistent is installed--moving on!"
+if [ "$this_OS" -eq 1 ]; then
+  systemctl stop firewalld
+  systemctl disable firewalld
   sleep 0.4
+  echo "--> Installing all iptables services and utils..."
+  dnf install -y iptables-services ; dnf install -y iptables-util
 else
-  echo "--> Missing iptables-persistent package. Installing now..."
-  apt install -y iptables-persistent
+  if dpkg -l | grep -q "^ii  iptables-persistent "; then
+    echo "--> Nice, iptables-persistent is installed--moving on!"
+    sleep 0.4
+  else
+    echo "--> Missing iptables-persistent package. Installing now..."
+    apt install -y iptables-persistent
+  fi
 fi
 
 
@@ -22,8 +36,8 @@ set_box_type () {
   echo "Does this box need to forward traffic? [y/n]: "
   select yn in "Yes" "No"; do
     case $yn in
-      Yes) $box_type=1;;
-      No) $box_type=0;;
+      Yes) box_type=1;;
+      No) box_type=0;;
       *) echo "Please answer yes or no.";;
     esac
   done
@@ -87,7 +101,7 @@ iptables_ruleset () {
 
   # Change the default chain rules to deny any-any
   iptables -P INPUT DROP
-  if [ $box_type -eq 1 ]; then
+  if [ "$box_type" -eq 0 ]; then
     iptables -P FORWARD DROP
   fi
   iptables -P OUTPUT DROP
@@ -147,10 +161,10 @@ iptables_reset () {
 save_config () {
   echo "--> Saving configurations..."
 
-  if [ "$this_OS" == "Ubuntu" ]; then
-    sh -c "iptables-save > /etc/iptables/rules.v4"
-  elif [ "$this_OS" == "Rocky" ] || [ "$this_OS" == "Fedora" ]; then
+  if [ "$this_OS" -eq 1 ]; then
     sh -c "iptables-save > /etc/sysconfig/iptables"
+  else	  
+    sh -c "iptables-save > /etc/iptables/rules.v4"
   fi
 }
 
