@@ -44,7 +44,7 @@ set_box_type () {
 }
 
 scoring_engine_ip () {
-  echo "Please enter the IP address or the subnet range of the scoring engine (eg. 172.16.0.10 or 172.16.0.0/22):"
+  echo "Please enter the IP address or the subnet range of the scoring engine (eg. 172.16.0.10 or 172.16.0.0/16):"
   read -r input_scoring_ip
 
   if [[ "$input_scoring_ip" =~ ^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$ ]]; then
@@ -52,13 +52,13 @@ scoring_engine_ip () {
     echo "--> Setting scoring-engine IP to: $scoring_ip"
     echo ""
   else
-    echo "### Invalid IP. Must input in the format: X.X.X.X or ensure ip address is correct"
+    echo "### Invalid IP. Must input in the format: X.X.X.X or X.X.X.X/N within the proper IP address ranges"
     return 1
   fi
 }
 
 private_ip_addresses () {
-  echo "Please enter the IP addresses of your private devices separated by spaces (eg 192.168.1.1 192.168.1.2):"
+  echo "Please enter the IP addresses of your private devices separated by spaces (eg. 192.168.1.1 192.168.1.2):"
   read -a private_ips
 
   valid_ips=()
@@ -68,7 +68,7 @@ private_ip_addresses () {
       valid_ips+=("$private_ip")
       echo "--> Valid private IP detected and added: $private_ip"
     else
-      echo "### Invalid IP. Must input in the format: X.X.X.X or ensure ip address is correct"
+      echo "### Invalid IP. Must input in the format: X.X.X.X or ensure IP address is correct"
     fi
   done
 
@@ -124,14 +124,15 @@ iptables_ruleset () {
   iptables -A OUTPUT -p tcp --dport 80 -m conntrack --ctstate NEW -j ACCEPT
   iptables -A OUTPUT -p tcp --dport 443 -m conntrack --ctstate NEW -j ACCEPT
 
-  # Allow DNS outbound over both tcp & udp - for using apt installs and the like
-  iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT
+  # Allow DNS outbound over both udp & tcp - for using apt installs and the like
   iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
+  iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT
 
   # Whitelist scoring-engine IP
   iptables -A INPUT -s $scoring_ip -m conntrack --ctstate NEW -j ACCEPT
   iptables -A OUTPUT -d $scoring_ip -m conntrack --ctstate NEW -j ACCEPT
 
+  # Whitelist IPs of internal machines
   if [ ${#valid_ips[@]} -gt 0 ]; then
     for internal_ip in "${valid_ips[@]}"; do
       iptables -A INPUT -s $internal_ip -m conntrack --ctstate NEW -j ACCEPT
@@ -169,7 +170,7 @@ save_config () {
 }
 
 
-# Not working cause I'm a goober
+# Function below not working cause I'm a goober
 # set_box_type
 
 while true; do
@@ -186,7 +187,7 @@ done
 # 4 - Set each chain rule to accept all traffic and flush the individual rules
 # 5 - Exit the program
 
-#not added in yet as firewall rules/cases havent been added in to quantify using it, will augment firewall rules soon function (private_ip_addresses)
+# not added in yet as firewall rules/cases havent been added in to quantify using it, will augment firewall rules soon function (private_ip_addresses)
 
 echo -ne "--FIREWALL CONFIGURATION-- \n1) Quick Config\n2) Safe Setup\n3) Launch the IRON DOME\n4) Unbork the Box\n5) Exit\n"
 read -r choice
