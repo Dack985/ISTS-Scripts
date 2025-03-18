@@ -36,8 +36,8 @@ set_box_type () {
   echo "Does this box need to forward traffic? [y/n]: "
   select yn in "Yes" "No"; do
     case $yn in
-      Yes) box_type=1;;
-      No) box_type=0;;
+      Yes) box_type=1; break;;
+      No) box_type=0; break;;
       *) echo "Please answer yes or no.";;
     esac
   done
