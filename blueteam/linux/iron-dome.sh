@@ -169,7 +169,8 @@ save_config () {
 }
 
 
-set_box_type
+# Not working cause I'm a goober
+# set_box_type
 
 while true; do
   scoring_engine_ip
@@ -186,7 +187,7 @@ done
 # 5 - Exit the program
 
 #not added in yet as firewall rules/cases havent been added in to quantify using it, will augment firewall rules soon function (private_ip_addresses)
-# Menu selection starts 
+
 echo -ne "--FIREWALL CONFIGURATION-- \n1) Quick Config\n2) Safe Setup\n3) Launch the IRON DOME\n4) Unbork the Box\n5) Exit\n"
 read -r choice
 
