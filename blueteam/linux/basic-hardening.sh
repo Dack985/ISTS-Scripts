@@ -61,6 +61,7 @@ EOF
     echo "Finished processing $HOST."
 done
 
+# remove netcat, comes preinstalled on newer versions of linux
 # "sudo pam-auth-update --force"
 # "apt remove telnetd"
 # bad systemd services, look for that
