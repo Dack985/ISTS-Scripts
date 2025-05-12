@@ -180,10 +180,11 @@ def verification():
         network_selection()
 
 def parse_hosts_from_csv(csv_file):
-    hosts = []
+
+    hosts_dict = {}
     if not os.path.exists(csv_file):
         print(f"CSV not found: {csv_file}")
-        return hosts
+        return []
 
     with open(csv_file, newline='') as f:
         reader = csv.DictReader(f)
@@ -192,25 +193,54 @@ def parse_hosts_from_csv(csv_file):
             hostname = row.get("Hostname", "").strip()
             os_info = row.get("OS", "").strip()
             service = row.get("Service", "").strip()
-            if hostname:
-                display_name = f"{hostname} ({ip})"
-            else:
-                display_name = ip
-            if ip:
-                hosts.append({
+
+            if not ip:
+                continue
+
+            if ip not in hosts_dict:
+                hosts_dict[ip] = {
                     "ip": ip,
                     "hostname": hostname,
                     "os": os_info,
-                    "service": service,
-                    "display_name": display_name
-                })
-    return hosts
+                    "services": set()
+                }
+
+            if service:
+                hosts_dict[ip]["services"].add(service)
+
+            # Prefer non-empty hostname or OS
+            if hostname:
+                hosts_dict[ip]["hostname"] = hostname
+            if os_info:
+                hosts_dict[ip]["os"] = os_info
+
+    # Create display_name and convert to list
+    final_hosts = []
+    for host in hosts_dict.values():
+        display_name = f"{host['hostname']} ({host['ip']})" if host["hostname"] else host["ip"]
+        if host["os"]:
+            display_name += f"\nOS: {host['os']}"
+        if host["services"]:
+            services = sorted(host["services"])
+            display_name += f"\nServices: {', '.join(services[:3])}"
+            if len(services) > 3:
+                display_name += f" (+{len(services)-3} more)"
+
+        host["display_name"] = display_name
+        final_hosts.append(host)
+
+    return final_hosts
+
 
 def parse_hosts_from_xml(xml_file):
-    hosts = []
+    import os
+    import xml.etree.ElementTree as ET
+
     if not os.path.exists(xml_file):
         print(f"XML file not found: {xml_file}")
-        return hosts
+        return []
+
+    hosts_dict = {}
 
     try:
         tree = ET.parse(xml_file)
@@ -219,50 +249,68 @@ def parse_hosts_from_xml(xml_file):
             ip = ""
             hostname = ""
             os_info = ""
-            services = []
+            services = set()
+
             address = host.find('./address[@addrtype="ipv4"]')
             if address is not None:
                 ip = address.get('addr', '')
-            hostnames = host.find('./hostnames')
-            if hostnames is not None:
-                hostname_elem = hostnames.find('./hostname')
-                if hostname_elem is not None:
-                    hostname = hostname_elem.get('name', '')
-            os_match = host.find('.//osmatch')
+            if not ip:
+                continue
+
+            # Hostname
+            hostname_elem = host.find('./hostnames/hostname')
+            if hostname_elem is not None:
+                hostname = hostname_elem.get('name', '')
+
+            # OS Info
+            os_match = host.find('.//os/osmatch')
             if os_match is not None:
                 os_info = os_match.get('name', '')
-            ports = host.findall('.//port')
-            for port in ports:
+
+            # Services
+            for port in host.findall('.//port'):
                 port_id = port.get('portid', '')
-                protocol = port.get('protocol', '')
-                service = port.find('.//service')
-                if service is not None:
-                    service_name = service.get('name', '')
+                service_elem = port.find('service')
+                if service_elem is not None:
+                    service_name = service_elem.get('name', '')
                     if port_id and service_name:
-                        services.append(f"{service_name} ({port_id})")
-            if hostname:
-                display_name = f"{hostname} ({ip})"
-            else:
-                display_name = ip
-            if os_info:
-                display_name += f"\nOS: {os_info}"
-            if services:
-                service_str = ", ".join(services[:3])
-                if len(services) > 3:
-                    service_str += f" (+{len(services)-3} more)"
-                display_name += f"\nServices: {service_str}"
-            if ip:
-                hosts.append({
+                        services.add(f"{service_name} ({port_id})")
+
+            if ip not in hosts_dict:
+                hosts_dict[ip] = {
                     "ip": ip,
                     "hostname": hostname,
                     "os": os_info,
-                    "service": ", ".join(services),
-                    "display_name": display_name
-                })
+                    "services": services
+                }
+            else:
+                hosts_dict[ip]["services"].update(services)
+                if hostname:
+                    hosts_dict[ip]["hostname"] = hostname
+                if os_info:
+                    hosts_dict[ip]["os"] = os_info
+
+        # Create display_name and convert to list
+        final_hosts = []
+        for host in hosts_dict.values():
+            display_name = f"{host['hostname']} ({host['ip']})" if host["hostname"] else host["ip"]
+            if host["os"]:
+                display_name += f"\nOS: {host['os']}"
+            if host["services"]:
+                services = sorted(host["services"])
+                display_name += f"\nServices: {', '.join(services[:3])}"
+                if len(services) > 3:
+                    display_name += f" (+{len(services)-3} more)"
+
+            host["display_name"] = display_name
+            final_hosts.append(host)
+
+        return final_hosts
+
     except Exception as e:
         print(f"Error parsing XML: {e}")
+        return []
 
-    return hosts
 
 def generate_drawio(networks, output_file="network_topology.drawio"):
     print("\nVerifying subnet data before generating diagram:")
@@ -299,6 +347,7 @@ def generate_drawio(networks, output_file="network_topology.drawio"):
             "height": str(subnet_height),
             "as": "geometry"
         })
+
         host_y_offset = 50
         for host in subnet_hosts:
             host_id = str(id_counter)
@@ -306,13 +355,14 @@ def generate_drawio(networks, output_file="network_topology.drawio"):
             host_style = "rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;fontSize=10;"
             host_cell = ET.SubElement(root, "mxCell", id=host_id, value=host["display_name"], style=host_style, vertex="1", parent=subnet_id)
             ET.SubElement(host_cell, "mxGeometry", attrib={
+                "x": "10",
                 "y": str(host_y_offset),
                 "width": str(subnet_width - 20),
                 "height": str(host_height),
-                "as": "geometry",
-                "relative": "1"
+                "as": "geometry"
             })
             host_y_offset += host_height + 5
+
         y += subnet_height + spacing
 
     tree = ET.ElementTree(mxfile)
@@ -321,6 +371,7 @@ def generate_drawio(networks, output_file="network_topology.drawio"):
         tree.write(f, encoding="utf-8")
 
     print(f"\n✅ Draw.io file with hosts generated: {output_file}")
+
 
 if __name__ == "__main__":
     network_selection()
