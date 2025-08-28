@@ -27,19 +27,19 @@ check_resources() {
     echo "Disk space: ${DISK_AVAIL_GB}GB"
 
     if (( CPU_COUNT < 2 )); then
-        echo "❌ Requires at least 2 CPU cores."
+        echo "Requires at least 2 CPU cores."
         exit 1
     fi
     if (( MEM_TOTAL_MB < 2048 )); then
-        echo "❌ Requires at least 2GB RAM."
+        echo "Requires at least 2GB RAM."
         exit 1
     fi
-    if (( DISK_AVAIL_GB < 20 )); then
-        echo "❌ Requires at least 20GB of available disk space."
+    if (( DISK_AVAIL_GB < 15 )); then
+        echo "Requires at least 15GB of available disk space."
         exit 1
     fi
 
-    echo "✅ System resources sufficient."
+    echo "System resources sufficient."
 }
 
 # Detect OS
